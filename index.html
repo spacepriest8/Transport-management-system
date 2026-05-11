@@ -438,6 +438,11 @@
             border-radius: 12px;
             background: #f8fafc;
         }
+        .session-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
         .journey-personnel-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
@@ -605,18 +610,25 @@
             <div class="card">
                 <div class="section-title">New Journey</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Reference</label><input type="text" id="j-ref"></div>
-                    <div class="form-group"><label>Departure location</label><input type="text" id="j-departure-location"></div>
-                    <div class="form-group"><label>Destination</label><input type="text" id="j-dest"></div>
+                    <div class="form-group">
+                        <label>Journey session</label>
+                        <select id="j-session">
+                            <option value="">Select journey</option>
+                            <option value="Journey A">IA(PH) to ANOH (Morning)</option>
+                            <option value="Journey B"> ANOH to IA(PH) (Morning)</option>
+                            <option value="Journey C"> IA(PH) to ANOH (Afternoon)</option>
+                            <option value="Journey D">ANOH to IA(PH) (Afternoon)</option>
+                        </select>
+                    </div>
                     <div class="form-group"><label>Departure date/time</label><input type="datetime-local" id="j-departure-time"></div>
                     <div class="form-group"><label>Estimated arrival</label><input type="datetime-local" id="j-arrival-time"></div>
                     <div class="form-group"><label>Vehicle</label><select id="j-vehicle"><option value="">Select vehicle</option></select></div>
                     <div class="form-group"><label>Driver</label><select id="j-driver"><option value="">Select driver</option></select></div>
                 </div>
 
-                <div class="section-title journey-personnel-section">Assign Personnel</div>
+                <div class="section-title journey-personnel-section">Session personnel</div>
                 <div class="card journey-personnel-card">
-                    <div id="j-personnel-list" class="journey-personnel-list"></div>
+                    <div id="j-session-personnel-count" class="session-count">Total personnel for selected session: 0</div>
                 </div>
 
                 <button class="btn btn-primary mt-12" onclick="saveJourney()">Create Journey</button>
@@ -825,15 +837,23 @@
                 document.getElementById('kpi-personnel-scheduled').innerText = totalPersonnel;
 
                 // 5. Get Recent Journey List
-                const { data: recentJourneys } = await _supabase
-                    .from('journeys')
-                    .select('*, vehicles(type)')
-                    .order('created_at', { ascending: false })
-                    .limit(5);
+                const [{ data: recentJourneys }, { data: allPersonnel }] = await Promise.all([
+                    _supabase.from('journeys').select('*, vehicles(type)').order('created_at', { ascending: false }).limit(5),
+                    _supabase.from('personnel').select('journey')
+                ]);
+
+                const journeyPersonnelCount = {};
+                if (allPersonnel) {
+                    allPersonnel.forEach(person => {
+                        if (person.journey) {
+                            journeyPersonnelCount[person.journey] = (journeyPersonnelCount[person.journey] || 0) + 1;
+                        }
+                    });
+                }
 
                 if (recentJourneys) {
                     document.getElementById('dash-journey-body').innerHTML = recentJourneys.map(j => {
-                        const personnelCount = j.personnel_ids ? j.personnel_ids.split(',').filter(id => id.trim()).length : 0;
+                        const personnelCount = journeyPersonnelCount[j.journey_ref] || (j.personnel_ids ? j.personnel_ids.split(',').filter(id => id.trim()).length : 0);
                         return `
                         <tr>
                             <td>${j.journey_ref}</td>
@@ -981,19 +1001,17 @@
         }
 
         async function loadJourneyFormOptions() {
-            const [vehiclesResp, driversResp, personnelResp] = await Promise.all([
+            const [vehiclesResp, driversResp] = await Promise.all([
                 _supabase.from('vehicles').select('*'),
-                _supabase.from('drivers').select('*'),
-                _supabase.from('personnel').select('*')
+                _supabase.from('drivers').select('*')
             ]);
 
             const vehicles = vehiclesResp.data || [];
             const drivers = driversResp.data || [];
-            const personnel = personnelResp.data || [];
 
             const vehicleSelect = document.getElementById('j-vehicle');
             const driverSelect = document.getElementById('j-driver');
-            const personnelList = document.getElementById('j-personnel-list');
+            const sessionSelect = document.getElementById('j-session');
 
             vehicleSelect.innerHTML = `<option value="">Select vehicle</option>` + vehicles.map(v => `
                 <option value="${v.id}" data-capacity="${v.capacity}">${v.bus_number} (${v.capacity})</option>
@@ -1003,12 +1021,24 @@
                 <option value="${d.id}">${d.name}</option>
             `).join('');
 
-            personnelList.innerHTML = personnel.map(p => `
-                <label class="personnel-checkbox-row">
-                    <input type="checkbox" class="j-personnel-checkbox" value="${p.id}">
-                    ${p.full_name} (${p.company || p.emp_number || 'Company'})
-                </label>
-            `).join('');
+            if (sessionSelect) {
+                sessionSelect.onchange = updateJourneyPersonnelCount;
+                updateJourneyPersonnelCount();
+            }
+        }
+
+        async function updateJourneyPersonnelCount() {
+            const session = document.getElementById('j-session').value;
+            const counter = document.getElementById('j-session-personnel-count');
+
+            if (!session) {
+                counter.innerText = 'Total personnel for selected session: 0';
+                return;
+            }
+
+            const { data: personnelData } = await _supabase.from('personnel').select('id').eq('journey', session);
+            const total = personnelData ? personnelData.length : 0;
+            counter.innerText = `Total personnel for selected session: ${total}`;
         }
 
         async function saveDriver() {
@@ -1022,28 +1052,24 @@
         }
 
         async function saveJourney() {
-            const selectedPersonnel = Array.from(document.querySelectorAll('.j-personnel-checkbox:checked')).map(el => el.value);
+            const sessionValue = document.getElementById('j-session').value;
             const vehicleSelect = document.getElementById('j-vehicle');
             const driverSelect = document.getElementById('j-driver');
-            const selectedVehicle = vehicleSelect.selectedOptions[0];
+
+            if (!sessionValue) {
+                return alert('Please select a journey session.');
+            }
 
             if (!vehicleSelect.value || !driverSelect.value) {
                 return alert('Please select a vehicle and a driver for this journey.');
             }
 
-            if (!document.getElementById('j-ref').value) {
-                return alert('Please enter a journey reference.');
-            }
-
             const journeyData = {
-                journey_ref: document.getElementById('j-ref').value,
-                departure_location: document.getElementById('j-departure-location').value,
-                destination: document.getElementById('j-dest').value,
+                journey_ref: sessionValue,
                 departure_time: document.getElementById('j-departure-time').value || null,
                 arrival_time: document.getElementById('j-arrival-time').value || null,
                 vehicle_id: parseInt(vehicleSelect.value),
                 driver_id: parseInt(driverSelect.value),
-                personnel_ids: selectedPersonnel.length > 0 ? selectedPersonnel.join(',') : null,
                 status: 'Planned'
             };
 
@@ -1057,14 +1083,12 @@
             } else {
                 console.log('Journey saved:', data);
                 alert("Journey Created!");
-                document.getElementById('j-ref').value = '';
-                document.getElementById('j-departure-location').value = '';
-                document.getElementById('j-dest').value = '';
+                document.getElementById('j-session').value = '';
                 document.getElementById('j-departure-time').value = '';
                 document.getElementById('j-arrival-time').value = '';
                 document.getElementById('j-vehicle').value = '';
                 document.getElementById('j-driver').value = '';
-                document.querySelectorAll('.j-personnel-checkbox').forEach(el => el.checked = false);
+                updateJourneyPersonnelCount();
                 showScreen('dashboard');
             }
         }
@@ -1076,7 +1100,7 @@
         async function populateJourneyOptions(selectId) {
             const { data: journeys, error } = await _supabase
                 .from('journeys')
-                .select('id, journey_ref, departure_location, destination')
+                .select('id, journey_ref')
                 .order('created_at', { ascending: false });
 
             if (error || !journeys) {
@@ -1088,7 +1112,7 @@
             if (!select) return;
 
             select.innerHTML = `<option value="">Select journey</option>` + journeys.map(j => 
-                `<option value="${j.id}">${j.journey_ref} - ${j.departure_location} → ${j.destination}</option>`
+                `<option value="${j.id}">${j.journey_ref}</option>`
             ).join('');
         }
 
@@ -1102,7 +1126,7 @@
             // Fetch the selected journey
             const { data: journey, error: journeyError } = await _supabase
                 .from('journeys')
-                .select('journey_ref, departure_location, destination, personnel_ids')
+                .select('journey_ref')
                 .eq('id', journeyId)
                 .single();
 
@@ -1110,29 +1134,10 @@
                 return alert("Error loading journey data.");
             }
 
-            if (!journey.personnel_ids) {
-                return alert("No personnel assigned to this journey.");
-            }
-
-            let personnelIds = [];
-            if (typeof journey.personnel_ids === 'string') {
-                personnelIds = journey.personnel_ids.split(',').map(id => {
-                    const trimmed = id.trim();
-                    return isNaN(trimmed) ? trimmed : parseInt(trimmed);
-                }).filter(id => id);
-            } else if (Array.isArray(journey.personnel_ids)) {
-                personnelIds = journey.personnel_ids;
-            }
-
-            if (personnelIds.length === 0) {
-                return alert("No valid personnel IDs found for this journey.");
-            }
-
-            // Fetch the personnel for this journey
             const { data: personnel, error: personnelError } = await _supabase
                 .from('personnel')
                 .select('*')
-                .in('id', personnelIds);
+                .eq('journey', journey.journey_ref);
 
             if (personnelError) {
                 console.error('Personnel error:', personnelError);
@@ -1140,7 +1145,7 @@
             }
 
             if (!personnel || personnel.length === 0) {
-                return alert("No personnel records found for the selected IDs.");
+                return alert("No personnel assigned to this journey.");
             }
 
             const { jsPDF } = window.jspdf;
@@ -1149,19 +1154,19 @@
             doc.setFontSize(18);
             doc.text("RENAISSANCE AFRICA ENERGY COMPANY JOURNEY MANIFEST", 14, 20);
             doc.setFontSize(12);
-            doc.text(`Journey: ${journey.journey_ref} - ${journey.departure_location} → ${journey.destination}`, 14, 28);
+            doc.text(`Journey: ${journey.journey_ref}`, 14, 28);
             doc.setFontSize(10);
             doc.text(`Date: ${new Date().toLocaleString()}`, 14, 35);
 
             const rows = personnel.map(p => [
                 p.company || 'N/A',
                 p.full_name || 'N/A',
-                p.dept || 'N/A',
-                p.clearance || 'N/A'
+                p.sex || 'N/A',
+                p.role || 'N/A'
             ]);
             
             doc.autoTable({
-                head: [['Company', 'Name', 'Department', 'Clearance']],
+                head: [['Company', 'Name', 'Sex', 'Role']],
                 body: rows,
                 startY: 42,
                 theme: 'grid',
