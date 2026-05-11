@@ -1,0 +1,216 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transport Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* [Keeping your exact CSS styles here] */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; color: #1a1a18; }
+        .app { display: flex; flex-direction: column; gap: 0; max-width: 900px; margin: 0 auto; background: #fff; min-height: 100vh; }
+        .nav-tabs { display: flex; gap: 0; border-bottom: 0.5px solid #e0dfd8; overflow-x: auto; background: #fff; padding: 0 1rem; }
+        .nav-tab { padding: 10px 14px; font-size: 12px; color: #666; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s; display: flex; align-items: center; gap: 5px; }
+        .nav-tab:hover { color: #1a1a18; }
+        .nav-tab.active { color: #1a1a18; border-bottom-color: #1a1a18; font-weight: 500; }
+        .screen { display: none; padding: 1.25rem; }
+        .screen.active { display: block; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+        .kpi-card { background: #f5f5f0; border-radius: 8px; padding: 12px 14px; }
+        .kpi-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+        .kpi-value { font-size: 22px; font-weight: 500; color: #1a1a18; }
+        .kpi-sub { font-size: 11px; margin-top: 3px; }
+        .section-title { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .04em; }
+        .card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+        .table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 8px 10px; font-weight: 500; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; border-bottom: 0.5px solid #e0dfd8; }
+        td { padding: 9px 10px; border-bottom: 0.5px solid #e0dfd8; color: #1a1a18; }
+        .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+        .badge-green { background: #eaf3de; color: #3b6d11; }
+        .badge-blue { background: #e6f1fb; color: #185fa5; }
+        .btn { padding: 7px 14px; font-size: 13px; border: 0.5px solid #bbb; border-radius: 8px; background: transparent; color: #1a1a18; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 12px; color: #666; font-weight: 500; }
+        input, select { padding: 7px 10px; font-size: 13px; border: 0.5px solid #e0dfd8; border-radius: 8px; background: #fff; width: 100%; }
+        .info-banner { background: #e6f1fb; padding: 10px; border-radius: 8px; font-size: 12px; }
+    </style>
+</head> -->
+<!-- <body>
+    <div class="app">
+        <nav class="nav-tabs">
+            <div class="nav-tab" onclick="showScreen('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+            <div class="nav-tab" onclick="showScreen('personnel')"><i class="ti ti-users"></i> Personnel</div>
+            <div class="nav-tab" onclick="showScreen('vehicles')"><i class="ti ti-bus"></i> Vehicles</div>
+            <div class="nav-tab" onclick="showScreen('drivers')"><i class="ti ti-id-badge"></i> Drivers</div>
+            <div class="nav-tab" onclick="showScreen('journey')"><i class="ti ti-route"></i> Journey planning</div>
+            <div class="nav-tab" onclick="showScreen('manifest')"><i class="ti ti-clipboard-list"></i> Manifest</div>
+            <div class="nav-tab" onclick="showScreen('reports')"><i class="ti ti-chart-bar"></i> Reports</div>
+        </nav>
+
+        <!-- DASHBOARD -->
+        <div id="screen-dashboard" class="screen">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total journeys today</div>
+                    <div class="kpi-value">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERSONNEL -->
+        <div id="screen-personnel" class="screen active">
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Emp #</th><th>Name</th><th>Dept</th><th>Clearance</th></tr></thead>
+                    <tbody id="personnel-table-body"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="section-title">Add Personnel</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Full name</label><input type="text" id="p-name"></div>
+                    <div class="form-group"><label>Employee #</label><input type="text" id="p-emp-no"></div>
+                    <div class="form-group"><label>Dept</label><select id="p-dept"><option>Operations</option><option>Engineering</option></select></div>
+                    <div class="form-group"><label>Clearance</label><select id="p-clearance"><option>Approved</option><option>Pending</option></select></div>
+                </div>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="savePersonnel()">Save Personnel</button>
+            </div>
+        </div>
+
+        <!-- VEHICLES -->
+        <div id="screen-vehicles" class="screen">
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Bus #</th><th>Plate</th><th>Type</th><th>Cap</th><th>Status</th></tr></thead>
+                    <tbody id="vehicles-table-body"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="section-title">Add Vehicle</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Bus</label><input type="text" id="v-bus-no"></div>
+                    <div class="form-group"><label>Plate</label><input type="text" id="v-plate"></div>
+                    <div class="form-group"><label>Type</label><input type="text" id="v-type" placeholder="e.g. Bus"></div>
+                    <div class="form-group"><label>Capacity</label><input type="number" id="v-capacity" value="40"></div>
+                </div>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="saveVehicle()">Save Vehicle</button>
+            </div>
+        </div>
+
+        <!-- DRIVERS -->
+        <div id="screen-drivers" class="screen">
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Name</th><th>Contact</th><th>License</th><th>Status</th></tr></thead>
+                    <tbody id="drivers-table-body"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="section-title">Add Driver</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Name</label><input type="text" id="d-name"></div>
+                    <div class="form-group"><label>Contact</label><input type="text" id="d-contact"></div>
+                    <div class="form-group"><label>License </label><input type="text" id="d-license"></div>
+                    <div class="form-group"><label>Availability</label><select id="d-availability"><option>Available</option><option>On Leave</option></select></div>
+                </div>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="saveDriver()">Save Driver</button>
+            </div>
+        </div>
+
+        <!-- JOURNEY -->
+        <div id="screen-journey" class="screen">
+            <div class="card">
+                <div class="section-title">New Journey</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Reference</label><input type="text" id="j-ref"></div>
+                    <div class="form-group"><label>From</label><input type="text" id="j-dep"></div>
+                    <div class="form-group"><label>To</label><input type="text" id="j-dest"></div>
+                </div>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="saveJourney()">Create Journey</button>
+            </div>
+        </div>
+        
+        <!-- Other screens kept simple for now -->
+        <div id="screen-manifest" class="screen"><div class="info-banner">Manifest data loads here.</div></div>
+        <div id="screen-reports" class="screen"><div class="info-banner">Reports generate here.</div></div>
+    </div>
+
+    <script>
+        const SB_URL = "https://aarxunfqfqqzbbsiftab.supabase.co"; 
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhcnh1bmZxZnFxemJic2lmdGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTcyNjcsImV4cCI6MjA5MzkzMzI2N30.03TscP9nxu9sAcc8_eQsDayJGMZwFzrdGE4XNhdzr4E"; // PASTE YOUR KEY HERE
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            if(id === 'personnel') loadPersonnel();
+            if(id === 'vehicles') loadVehicles();
+            if(id === 'drivers') loadDrivers();
+        }
+
+        async function loadPersonnel() {
+            const { data, error } = await _supabase.from('personnel').select('*');
+            if (data) document.getElementById('personnel-table-body').innerHTML = data.map(p => `<tr><td>${p.emp_number}</td><td>${p.full_name}</td><td>${p.dept}</td><td>${p.clearance}</td></tr>`).join('');
+        }
+
+        async function savePersonnel() {
+            const { error } = await _supabase.from('personnel').insert([{
+                full_name: document.getElementById('p-name').value,
+                emp_number: document.getElementById('p-emp-no').value,
+                dept: document.getElementById('p-dept').value,
+                clearance: document.getElementById('p-clearance').value
+            }]);
+            if (!error) { alert("Personnel Saved!"); loadPersonnel(); } else { alert(error.message); }
+        }
+
+        async function loadVehicles() {
+            const { data, error } = await _supabase.from('vehicles').select('*');
+            if (data) document.getElementById('vehicles-table-body').innerHTML = data.map(v => `<tr><td>${v.bus_number}</td><td>${v.plate}</td><td>${v.type}</td><td>${v.capacity}</td><td>${v.status}</td></tr>`).join('');
+        }
+
+        async function saveVehicle() {
+            const { error } = await _supabase.from('vehicles').insert([{
+                bus_number: document.getElementById('v-bus-no').value,
+                plate: document.getElementById('v-plate').value,
+                type: document.getElementById('v-type').value,
+                capacity: Number(document.getElementById('v-capacity').value),
+                status: 'Active'
+            }]);
+            if (!error) { alert("Vehicle Saved!"); loadVehicles(); } else { alert(error.message); }
+        }
+
+        async function loadDrivers() {
+            const { data, error } = await _supabase.from('drivers').select('*');
+            if (data) document.getElementById('drivers-table-body').innerHTML = data.map(d => `<tr><td>${d.name}</td><td>${d.contact}</td><td>${d.license_number}</td><td>${d.availability}</td></tr>`).join('');
+        }
+
+        async function saveDriver() {
+            const { error } = await _supabase.from('drivers').insert([{
+                name: document.getElementById('d-name').value,
+                contact: document.getElementById('d-contact').value,
+                license_number: document.getElementById('d-license').value,
+                availability: document.getElementById('d-availability').value
+            }]);
+            if (!error) { alert("Driver Saved!"); loadDrivers(); } else { alert(error.message); }
+        }
+
+        async function saveJourney() {
+            const { error } = await _supabase.from('journeys').insert([{
+                journey_ref: document.getElementById('j-ref').value,
+                departure_location: document.getElementById('j-dep').value,
+                destination: document.getElementById('j-dest').value,
+                status: 'Planned'
+            }]);
+            if (!error) { alert("Journey Created!"); showScreen('dashboard'); } else { alert(error.message); }
+        }
+
+        window.onload = () => showScreen('dashboard');
+    </script> -->
+<!-- </body> -->
+<!-- </html> -->
