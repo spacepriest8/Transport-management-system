@@ -248,26 +248,29 @@
             border-collapse: collapse;
             font-size: 14px;
             background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             overflow: hidden;
         }
 
         th {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 16px 20px;
+            padding: 12px 14px;
             font-weight: 600;
             color: #374151;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border-bottom: 2px solid #e2e8f0;
+            border: 1px solid #e2e8f0;
+            border-bottom-width: 2px;
             position: sticky;
             top: 0;
+            background-clip: padding-box;
         }
 
         td {
-            padding: 16px 20px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
             color: #374151;
             transition: background-color 0.15s ease;
         }
@@ -1145,8 +1148,22 @@
                     body: rows,
                     startY: 42,
                     theme: 'grid',
-                    headStyles: { fillColor: [26, 26, 24] },
-                    bodyStyles: { textColor: [0, 0, 0] }
+                    headStyles: { 
+                        fillColor: [26, 26, 24],
+                        textColor: [255, 255, 255],
+                        lineWidth: 1,
+                        lineColor: [0, 0, 0]
+                    },
+                    bodyStyles: { 
+                        textColor: [0, 0, 0],
+                        lineWidth: 0.75,
+                        lineColor: [80, 80, 80]
+                    },
+                    margin: { left: 14, right: 14 },
+                    didDrawPage: (data) => {
+                        doc.setLineWidth(0.5);
+                        doc.setDrawColor(0, 0, 0);
+                    }
                 });
 
                 doc.save(`${journey.journey_ref}_Personnel_Manifest.pdf`);

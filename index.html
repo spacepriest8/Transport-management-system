@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
 
     <style>
         /* Modern CSS Reset */
@@ -247,26 +248,29 @@
             border-collapse: collapse;
             font-size: 14px;
             background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             overflow: hidden;
         }
 
         th {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 16px 20px;
+            padding: 12px 14px;
             font-weight: 600;
             color: #374151;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border-bottom: 2px solid #e2e8f0;
+            border: 1px solid #e2e8f0;
+            border-bottom-width: 2px;
             position: sticky;
             top: 0;
+            background-clip: padding-box;
         }
 
         td {
-            padding: 16px 20px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
             color: #374151;
             transition: background-color 0.15s ease;
         }
@@ -554,10 +558,10 @@
         </header>
         <nav class="nav-tabs">
             <div class="nav-tab active" id="tab-dashboard" onclick="showScreen('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+            <div class="nav-tab" id="tab-journey" onclick="showScreen('journey')"><i class="ti ti-route"></i> Journey planning</div>
             <div class="nav-tab" id="tab-personnel" onclick="showScreen('personnel')"><i class="ti ti-users"></i> Personnel</div>
             <div class="nav-tab" id="tab-vehicles" onclick="showScreen('vehicles')"><i class="ti ti-bus"></i> Vehicles</div>
             <div class="nav-tab" id="tab-drivers" onclick="showScreen('drivers')"><i class="ti ti-id-badge"></i> Drivers</div>
-            <div class="nav-tab" id="tab-journey" onclick="showScreen('journey')"><i class="ti ti-route"></i> Journey planning</div>
             <div class="nav-tab" id="tab-reports" onclick="showScreen('reports')"><i class="ti ti-chart-bar"></i> Reports</div>
         </nav>
 
@@ -596,37 +600,74 @@
             </div>
         </div>
 
+        <!-- JOURNEY -->
+        <div id="screen-journey" class="screen">
+            <div class="card">
+                <div class="section-title">New Journey</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Reference</label><input type="text" id="j-ref"></div>
+                    <div class="form-group"><label>Departure location</label><input type="text" id="j-departure-location"></div>
+                    <div class="form-group"><label>Destination</label><input type="text" id="j-dest"></div>
+                    <div class="form-group"><label>Departure date/time</label><input type="datetime-local" id="j-departure-time"></div>
+                    <div class="form-group"><label>Estimated arrival</label><input type="datetime-local" id="j-arrival-time"></div>
+                    <div class="form-group"><label>Vehicle</label><select id="j-vehicle"><option value="">Select vehicle</option></select></div>
+                    <div class="form-group"><label>Driver</label><select id="j-driver"><option value="">Select driver</option></select></div>
+                </div>
+
+                <div class="section-title journey-personnel-section">Assign Personnel</div>
+                <div class="card journey-personnel-card">
+                    <div id="j-personnel-list" class="journey-personnel-list"></div>
+                </div>
+
+                <button class="btn btn-primary mt-12" onclick="saveJourney()">Create Journey</button>
+            </div>
+        </div>
+
         <!-- PERSONNEL -->
         <div id="screen-personnel" class="screen">
             <div class="filter-row">
                 <input class="search-box" id="personnel-search" placeholder="Search personnel..." type="text">
-                <select class="filter-select" id="personnel-dept-filter">
-                    <option value="">All departments</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Logistics">Logistics</option>
+                <select class="filter-select" id="personnel-role-filter">
+                    <option value="">All roles</option>
+                    <option value="Driver">Driver</option>
+                    <option value="Guide">Guide</option>
+                    <option value="Support">Support</option>
+                    <option value="Admin">Admin</option>
                 </select>
-                <select class="filter-select" id="personnel-status-filter">
-                    <option value="">All statuses</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Pending">Pending</option>
+                <select class="filter-select" id="personnel-journey-filter">
+                    <option value="">All journeys</option>
+                    <option value="Journey A">IA(PH) - ANOH (Morning)</option>
+                    <option value="Journey B">ANOH - IA(PH) (Morning)</option>
+                    <option value="Journey C">IA(PH) - ANOH (Afternoon)</option>
+                    <option value="Journey D">ANOH - IA(PH) (Afternoon)</option>
                 </select>
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Company</th><th>Name</th><th>Dept</th><th>Clearance</th></tr></thead>
+                    <thead><tr><th>Company</th><th>Name</th><th>Sex</th><th>Role</th><th>Journey</th></tr></thead>
                     <tbody id="personnel-table-body"></tbody>
                 </table>
             </div>
             <div class="card">
                 <div class="section-title">Add Personnel</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Full name</label><input type="text" id="p-name"></div>
+                    <div class="form-group"><label>Name</label><input type="text" id="p-name"></div>
                     <div class="form-group"><label>Company</label><input type="text" id="p-company"></div>
-                    <div class="form-group"><label>Dept</label><select id="p-dept"><option>Operations</option><option>Engineering</option><option>Logistics</option></select></div>
-                    <div class="form-group"><label>Clearance</label><select id="p-clearance"><option>Approved</option><option>Pending</option></select></div>
+                    <div class="form-group"><label>Sex</label><select id="p-sex"><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                    <div class="form-group"><label>Role</label><input type="text" id="p-role"></div>
+                    <div class="form-group"><label>Journey</label><select id="p-journey"><option value="">Select journey</option><option value="Journey A">Journey A</option><option value="Journey B">Journey B</option><option value="Journey C">Journey C</option><option value="Journey D">Journey D</option></select></div>
                 </div>
                 <button class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Bulk Upload Personnel</div>
+                <p class="report-note">Upload an Excel file with columns: Full name, Company, Sex, Role, Journey</p>
+                <div class="form-group">
+                    <label>Excel File</label>
+                    <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv">
+                </div>
+                <button class="btn btn-primary mt-12" onclick="bulkUploadPersonnel()"><i class="ti ti-upload"></i> Upload Personnel from Excel</button>
             </div>
         </div>
 
@@ -670,29 +711,6 @@
             </div>
         </div>
 
-        <!-- JOURNEY -->
-        <div id="screen-journey" class="screen">
-            <div class="card">
-                <div class="section-title">New Journey</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Reference</label><input type="text" id="j-ref"></div>
-                    <div class="form-group"><label>Departure location</label><input type="text" id="j-departure-location"></div>
-                    <div class="form-group"><label>Destination</label><input type="text" id="j-dest"></div>
-                    <div class="form-group"><label>Departure date/time</label><input type="datetime-local" id="j-departure-time"></div>
-                    <div class="form-group"><label>Estimated arrival</label><input type="datetime-local" id="j-arrival-time"></div>
-                    <div class="form-group"><label>Vehicle</label><select id="j-vehicle"><option value="">Select vehicle</option></select></div>
-                    <div class="form-group"><label>Driver</label><select id="j-driver"><option value="">Select driver</option></select></div>
-                </div>
-
-                <div class="section-title journey-personnel-section">Assign Personnel</div>
-                <div class="card journey-personnel-card">
-                    <div id="j-personnel-list" class="journey-personnel-list"></div>
-                </div>
-
-                <button class="btn btn-primary mt-12" onclick="saveJourney()">Create Journey</button>
-            </div>
-        </div>
-        
         <!-- REPORTS / MANIFEST -->
         <div id="screen-reports" class="screen">
             <div class="card report-card-centered">
@@ -725,11 +743,14 @@
             if(activeTab) activeTab.classList.add('active');
 
             if(id === 'dashboard') loadDashboard();
-            if(id === 'personnel') loadPersonnel();
+            if(id === 'journey') loadJourneyFormOptions();
+            if(id === 'personnel') {
+                loadPersonnel();
+                populateJourneyOptions('p-journey');
+            }
             if(id === 'vehicles') loadVehicles();
             if(id === 'drivers') loadDrivers();
             if(id === 'reports') loadJourneysForReport();
-            if(id === 'journey') loadJourneyFormOptions();
         }
 
         async function loadDashboard() {
@@ -837,24 +858,25 @@
         }
 
         function renderPersonnelTable(data) {
-            document.getElementById('personnel-table-body').innerHTML = data.map(p => `<tr><td>${p.company || ''}</td><td>${p.full_name}</td><td>${p.dept}</td><td>${formatClearanceBadge(p.clearance)}</td></tr>`).join('');
+            document.getElementById('personnel-table-body').innerHTML = data.map(p => `<tr><td>${p.company || ''}</td><td>${p.full_name || ''}</td><td>${p.sex || 'N/A'}</td><td>${p.role || 'N/A'}</td><td>${p.journey || 'N/A'}</td></tr>`).join('');
         }
 
         function filterPersonnel() {
             const searchTerm = document.getElementById('personnel-search').value.toLowerCase();
-            const deptFilter = document.getElementById('personnel-dept-filter').value;
-            const statusFilter = document.getElementById('personnel-status-filter').value;
+            const roleFilter = document.getElementById('personnel-role-filter').value;
+            const journeyFilter = document.getElementById('personnel-journey-filter').value;
 
             const filtered = allPersonnelData.filter(person => {
                 const matchesSearch = !searchTerm ||
                     person.full_name.toLowerCase().includes(searchTerm) ||
                     (person.company && person.company.toLowerCase().includes(searchTerm)) ||
-                    person.dept.toLowerCase().includes(searchTerm);
+                    (person.role && person.role.toLowerCase().includes(searchTerm)) ||
+                    (person.journey && person.journey.toLowerCase().includes(searchTerm));
 
-                const matchesDept = !deptFilter || person.dept === deptFilter;
-                const matchesStatus = !statusFilter || person.clearance === statusFilter;
+                const matchesRole = !roleFilter || person.role === roleFilter;
+                const matchesJourney = !journeyFilter || person.journey === journeyFilter;
 
-                return matchesSearch && matchesDept && matchesStatus;
+                return matchesSearch && matchesRole && matchesJourney;
             });
 
             renderPersonnelTable(filtered);
@@ -878,10 +900,63 @@
             const { error } = await _supabase.from('personnel').insert([{
                 full_name: document.getElementById('p-name').value,
                 company: document.getElementById('p-company').value,
-                dept: document.getElementById('p-dept').value,
-                clearance: document.getElementById('p-clearance').value
+                sex: document.getElementById('p-sex').value,
+                role: document.getElementById('p-role').value,
+                journey: document.getElementById('p-journey').value
             }]);
             if (!error) { alert("Personnel Saved!"); loadPersonnel(); }
+        }
+
+        async function bulkUploadPersonnel() {
+            const fileInput = document.getElementById('excel-file-input');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                return alert("Please select an Excel file.");
+            }
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                if (rows.length === 0) {
+                    return alert("Excel file is empty.");
+                }
+
+                const requiredColumns = ['Full name', 'Company', 'Sex', 'Role', 'Journey'];
+                const firstRow = rows[0];
+                const hasAllColumns = requiredColumns.every(col => col in firstRow);
+
+                if (!hasAllColumns) {
+                    return alert(`Excel file must have columns: ${requiredColumns.join(', ')}`);
+                }
+
+                const personnel = rows.map(row => ({
+                    full_name: row['Full name']?.toString().trim(),
+                    company: row['Company']?.toString().trim() || '',
+                    sex: row['Sex']?.toString().trim(),
+                    role: row['Role']?.toString().trim(),
+                    journey: row['Journey']?.toString().trim()
+                })).filter(p => p.full_name && p.role && p.journey);
+
+                if (personnel.length === 0) {
+                    return alert("No valid personnel records found in the file.");
+                }
+
+                const { error } = await _supabase.from('personnel').insert(personnel);
+                if (error) {
+                    alert(`Error uploading personnel: ${error.message}`);
+                } else {
+                    alert(`Successfully uploaded ${personnel.length} personnel records!`);
+                    fileInput.value = '';
+                    loadPersonnel();
+                }
+            } catch (err) {
+                console.error('Error processing file:', err);
+                alert(`Error processing file: ${err.message}`);
+            }
         }
 
         async function loadVehicles() {
@@ -995,13 +1070,26 @@
         }
 
         async function loadJourneysForReport() {
-            const { data: journeys } = await _supabase.from('journeys').select('id, journey_ref, departure_location, destination');
-            if (journeys) {
-                const select = document.getElementById('journey-select');
-                select.innerHTML = `<option value="">Select a journey</option>` + journeys.map(j => 
-                    `<option value="${j.id}">${j.journey_ref} - ${j.departure_location} → ${j.destination}</option>`
-                ).join('');
+            await populateJourneyOptions('journey-select');
+        }
+
+        async function populateJourneyOptions(selectId) {
+            const { data: journeys, error } = await _supabase
+                .from('journeys')
+                .select('id, journey_ref, departure_location, destination')
+                .order('created_at', { ascending: false });
+
+            if (error || !journeys) {
+                console.error('Error loading journeys for dropdown:', error);
+                return;
             }
+
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            select.innerHTML = `<option value="">Select journey</option>` + journeys.map(j => 
+                `<option value="${j.id}">${j.journey_ref} - ${j.departure_location} → ${j.destination}</option>`
+            ).join('');
         }
 
         // PDF MANIFEST GENERATOR
@@ -1026,9 +1114,18 @@
                 return alert("No personnel assigned to this journey.");
             }
 
-            const personnelIds = journey.personnel_ids.split(',').map(id => id.trim()).filter(id => id);
+            let personnelIds = [];
+            if (typeof journey.personnel_ids === 'string') {
+                personnelIds = journey.personnel_ids.split(',').map(id => {
+                    const trimmed = id.trim();
+                    return isNaN(trimmed) ? trimmed : parseInt(trimmed);
+                }).filter(id => id);
+            } else if (Array.isArray(journey.personnel_ids)) {
+                personnelIds = journey.personnel_ids;
+            }
+
             if (personnelIds.length === 0) {
-                return alert("No personnel assigned to this journey.");
+                return alert("No valid personnel IDs found for this journey.");
             }
 
             // Fetch the personnel for this journey
@@ -1037,8 +1134,13 @@
                 .select('*')
                 .in('id', personnelIds);
 
-            if (personnelError || !personnel || personnel.length === 0) {
-                return alert("Error loading personnel data.");
+            if (personnelError) {
+                console.error('Personnel error:', personnelError);
+                return alert(`Error loading personnel data: ${personnelError.message}`);
+            }
+
+            if (!personnel || personnel.length === 0) {
+                return alert("No personnel records found for the selected IDs.");
             }
 
             const { jsPDF } = window.jspdf;
@@ -1051,14 +1153,20 @@
             doc.setFontSize(10);
             doc.text(`Date: ${new Date().toLocaleString()}`, 14, 35);
 
-            const rows = personnel.map(p => [p.company || '', p.full_name, p.dept, p.clearance]);
+            const rows = personnel.map(p => [
+                p.company || 'N/A',
+                p.full_name || 'N/A',
+                p.dept || 'N/A',
+                p.clearance || 'N/A'
+            ]);
             
             doc.autoTable({
                 head: [['Company', 'Name', 'Department', 'Clearance']],
                 body: rows,
                 startY: 42,
                 theme: 'grid',
-                headStyles: { fillColor: [26, 26, 24] }
+                headStyles: { fillColor: [26, 26, 24], textColor: [255, 255, 255], lineWidth: 1, lineColor: [0, 0, 0] },
+                bodyStyles: { textColor: [0, 0, 0], lineWidth: 0.75, lineColor: [80, 80, 80] }
             });
 
             doc.save(`${journey.journey_ref}_Personnel_Manifest.pdf`);
@@ -1069,8 +1177,8 @@
 
             // Add event listeners for personnel search and filters
             document.getElementById('personnel-search').addEventListener('input', filterPersonnel);
-            document.getElementById('personnel-dept-filter').addEventListener('change', filterPersonnel);
-            document.getElementById('personnel-status-filter').addEventListener('change', filterPersonnel);
+            document.getElementById('personnel-role-filter').addEventListener('change', filterPersonnel);
+            document.getElementById('personnel-journey-filter').addEventListener('change', filterPersonnel);
         };
     </script>
 </body>
