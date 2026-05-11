@@ -51,9 +51,9 @@
             <div class="nav-tab" onclick="showScreen('manifest')"><i class="ti ti-clipboard-list"></i> Manifest</div>
             <div class="nav-tab" onclick="showScreen('reports')"><i class="ti ti-chart-bar"></i> Reports</div>
         </nav>
-
-        <!-- DASHBOARD -->
-        <div id="screen-dashboard" class="screen">
+ 
+    DASHBOARD -->
+        <!-- <div id="screen-dashboard" class="screen">
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Total journeys today</div>
@@ -62,8 +62,8 @@
             </div>
         </div>
 
-        <!-- PERSONNEL -->
-        <div id="screen-personnel" class="screen active">
+       PERSONNEL -->
+        <!-- <div id="screen-personnel" class="screen active">
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>Emp #</th><th>Name</th><th>Dept</th><th>Clearance</th></tr></thead>
@@ -79,11 +79,11 @@
                     <div class="form-group"><label>Clearance</label><select id="p-clearance"><option>Approved</option><option>Pending</option></select></div>
                 </div>
                 <button class="btn btn-primary" style="margin-top:12px" onclick="savePersonnel()">Save Personnel</button>
-            </div>
-        </div>
+            </div> -->
+        <!-- </div>  -->
 
         <!-- VEHICLES -->
-        <div id="screen-vehicles" class="screen">
+        <!-- <div id="screen-vehicles" class="screen">
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>Bus #</th><th>Plate</th><th>Type</th><th>Cap</th><th>Status</th></tr></thead>
@@ -100,10 +100,10 @@
                 </div>
                 <button class="btn btn-primary" style="margin-top:12px" onclick="saveVehicle()">Save Vehicle</button>
             </div>
-        </div>
+        </div> -->
 
         <!-- DRIVERS -->
-        <div id="screen-drivers" class="screen">
+        <!-- <div id="screen-drivers" class="screen">
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>Name</th><th>Contact</th><th>License</th><th>Status</th></tr></thead>
@@ -120,10 +120,10 @@
                 </div>
                 <button class="btn btn-primary" style="margin-top:12px" onclick="saveDriver()">Save Driver</button>
             </div>
-        </div>
+        </div> -->
 
         <!-- JOURNEY -->
-        <div id="screen-journey" class="screen">
+        <!-- <div id="screen-journey" class="screen">
             <div class="card">
                 <div class="section-title">New Journey</div>
                 <div class="form-grid">
@@ -134,9 +134,9 @@
                 <button class="btn btn-primary" style="margin-top:12px" onclick="saveJourney()">Create Journey</button>
             </div>
         </div>
-        
+         -->
         <!-- Other screens kept simple for now -->
-        <div id="screen-manifest" class="screen"><div class="info-banner">Manifest data loads here.</div></div>
+        <!-- <div id="screen-manifest" class="screen"><div class="info-banner">Manifest data loads here.</div></div>
         <div id="screen-reports" class="screen"><div class="info-banner">Reports generate here.</div></div>
     </div>
 
@@ -210,7 +210,7 @@
             if (!error) { alert("Journey Created!"); showScreen('dashboard'); } else { alert(error.message); }
         }
 
-        window.onload = () => showScreen('dashboard');
-    </script> -->
+        window.onload = () => showScreen('dashboard'); -->
+    <!-- </script> -->
 <!-- </body> -->
 <!-- </html> -->
