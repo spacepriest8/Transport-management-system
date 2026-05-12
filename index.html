@@ -281,7 +281,7 @@
 
         /* Modern Buttons */
         .btn {
-            padding: 10px 20px;
+            padding: 10px 10px;
             font-size: 14px;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
@@ -317,9 +317,15 @@
 
         .btn:hover {
             border-color: #3b82f6;
-            color: #1e40af;
+            color: #adadad;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .btn-small {
+            padding: 2px 12px;
+            font-size: 12px;
+            border-radius: 2px;
         }
 
         .btn-primary {
@@ -623,7 +629,7 @@
                         <label>Journey session</label>
                         <select id="j-session">
                             <option value="">Select journey</option>
-                            <option value="Journey A">IA(PH) to ANOH (Morning)</option>
+                            <option value="Journey AIA(PH) to ANOH (Morning)">IA(PH) to ANOH (Morning)</option>
                             <option value="Journey B"> ANOH to IA(PH) (Morning)</option>
                             <option value="Journey C"> IA(PH) to ANOH (Afternoon)</option>
                             <option value="Journey D">ANOH to IA(PH) (Afternoon)</option>
@@ -661,10 +667,10 @@
                 </select>
                 <select class="filter-select" id="personnel-journey-filter">
                     <option value="">All journeys</option>
-                    <option value="Journey A">IA(PH) - ANOH (Morning)</option>
-                    <option value="Journey B">ANOH - IA(PH) (Morning)</option>
-                    <option value="Journey C">IA(PH) - ANOH (Afternoon)</option>
-                    <option value="Journey D">ANOH - IA(PH) (Afternoon)</option>
+                    <option value="IA(PH) - ANOH (Morning)">IA(PH) - ANOH (Morning)</option>
+                    <option value="ANOH - IA(PH) (Morning)">ANOH - IA(PH) (Morning)</option>
+                    <option value="(PH) - ANOH (Afternoon)">IA(PH) - ANOH (Afternoon)</option>
+                    <option value="ANOH - IA(PH) (Afternoon)">ANOH - IA(PH) (Afternoon)</option>
                 </select>
             </div>
             <div class="table-wrap">
@@ -682,7 +688,7 @@
                     <div class="form-group"><label>Sex</label><select id="p-sex"><option value="Male">Male</option><option value="Female">Female</option></select></div>
                     <div class="form-group"><label>Role</label><select id="p-role"><option value="">Select role</option><option value="HSE Inspector">HSE Inspector</option><option value="Welder">Welder</option><option value="IDT">IDT</option><option value="Engineering">Engineering</option><option value="QA/QC">QA/QC</option></select></div>
                     <div class="form-group"><label>Journey</label><select id="p-journey"><option value="">Select journey</option><option value="Journey A">Journey A</option><option value="Journey B">Journey B</option><option value="Journey C">Journey C</option><option value="Journey D">Journey D</option></select></div>
-                    <button type="button" class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
+                    <button type="button" class="btn btn-primary btn-small mt-12" onclick="savePersonnel()">Save Personnel</button>
                 </div>
             </div>
 
@@ -701,7 +707,7 @@
         <div id="screen-vehicles" class="screen">
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Bus #</th><th>Plate</th><th>Type</th><th>Cap</th><th>Status</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Vehicle Name</th><th>Plate Number</th><th>Type</th><th>Cap</th><th>Status</th><th>Action</th></tr></thead>
                     <tbody id="vehicles-table-body"></tbody>
                 </table>
             </div>
@@ -714,7 +720,7 @@
                     <div class="form-group"><label>Type</label><input type="text" id="v-type"></div>
                     <div class="form-group"><label>Status</label><select id="v-status"><option value="Active">Active</option><option value="Maintenance">Maintenance</option><option value="Not Available">Not Available</option></select></div>
                     <div class="form-group"><label>Capacity</label><input type="number" id="v-capacity" value="40"></div>
-                    <button class="btn btn-primary mt-12" onclick="saveVehicle()">Save Vehicle</button>
+                    <button class="btn btn-primary btn-small mt-12" onclick="saveVehicle()">Save Vehicle</button>
                 </div>
             </div>
         </div>
