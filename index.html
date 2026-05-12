@@ -680,7 +680,7 @@
                     <div class="form-group"><label>Name</label><input type="text" id="p-name"></div>
                     <div class="form-group"><label>Company</label><input type="text" id="p-company"></div>
                     <div class="form-group"><label>Sex</label><select id="p-sex"><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                    <div class="form-group"><label>Role</label><input type="text" id="p-role"></div>
+                    <div class="form-group"><label>Role</label><select id="p-role"><option value="">Select role</option><option value="HSE Inspector">HSE Inspector</option><option value="Welder">Welder</option><option value="IDT">IDT</option><option value="Engineering">Engineering</option><option value="QA/QC">QA/QC</option></select></div>
                     <div class="form-group"><label>Journey</label><select id="p-journey"><option value="">Select journey</option><option value="Journey A">Journey A</option><option value="Journey B">Journey B</option><option value="Journey C">Journey C</option><option value="Journey D">Journey D</option></select></div>
                     <button class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
                 </div>
@@ -781,6 +781,7 @@
             if(id === 'personnel') {
                 loadPersonnel();
                 populateJourneyOptions('p-journey');
+                populateJourneyOptions('personnel-journey-filter', true);
             }
             if(id === 'vehicles') loadVehicles();
             if(id === 'drivers') loadDrivers();
@@ -1245,7 +1246,7 @@
             await populateJourneyOptions('journey-select');
         }
 
-        async function populateJourneyOptions(selectId) {
+        async function populateJourneyOptions(selectId, isFilter = false) {
             const { data: journeys, error } = await _supabase
                 .from('journeys')
                 .select('id, journey_ref, session')
@@ -1259,8 +1260,9 @@
             const select = document.getElementById(selectId);
             if (!select) return;
 
-            select.innerHTML = `<option value="">Select journey</option>` + journeys.map(j => 
-                `<option value="${j.id}" data-session="${j.session}">${j.journey_ref}</option>`
+            const defaultOption = isFilter ? '<option value="">All journeys</option>' : '<option value="">Select journey</option>';
+            select.innerHTML = defaultOption + journeys.map(j => 
+                `<option value="${j.journey_ref}" data-session="${j.session}">${j.journey_ref}</option>`
             ).join('');
         }
 
