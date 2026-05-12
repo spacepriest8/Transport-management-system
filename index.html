@@ -323,9 +323,14 @@
         }
 
         .btn-small {
-            padding: 2px 12px;
+            padding: 4px 10px;
             font-size: 12px;
-            border-radius: 2px;
+            border-radius: 6px;
+           
+        }
+        
+        .mt-12 {
+            margin-top: 2px;
         }
 
         .btn-primary {
@@ -629,10 +634,10 @@
                         <label>Journey session</label>
                         <select id="j-session">
                             <option value="">Select journey</option>
-                            <option value="Journey AIA(PH) to ANOH (Morning)">IA(PH) to ANOH (Morning)</option>
-                            <option value="Journey B"> ANOH to IA(PH) (Morning)</option>
-                            <option value="Journey C"> IA(PH) to ANOH (Afternoon)</option>
-                            <option value="Journey D">ANOH to IA(PH) (Afternoon)</option>
+                            <option value="IA(PH) to ANOH (Morning)">IA(PH) to ANOH (Morning)</option>
+                            <option value="ANOH to IA(PH) (Morning)"> ANOH to IA(PH) (Morning)</option>
+                            <option value="IA(PH) to ANOH (Afternoon)"> IA(PH) to ANOH (Afternoon)</option>
+                            <option value="ANOH to IA(PH) (Afternoon)">ANOH to IA(PH) (Afternoon)</option>
                         </select>
                     </div>
                     <div class="form-group"><label>Departure date/time</label><input type="datetime-local" id="j-departure-time"></div>
@@ -868,10 +873,15 @@
                 document.getElementById('kpi-personnel-scheduled').innerText = totalPersonnel;
 
                 // 5. Get Recent Journey List
-                const [{ data: recentJourneys }, { data: allPersonnel }] = await Promise.all([
-                    _supabase.from('journeys').select('*, vehicles(type)').order('created_at', { ascending: false }).limit(5),
-                    _supabase.from('personnel').select('journey')
+                const [journeysResp, personnelResp, vehiclesResp] = await Promise.all([
+                    _supabase.from('journeys').select('id, journey_ref, session, departure_time, vehicle_id').order('created_at', { ascending: false }).limit(5),
+                    _supabase.from('personnel').select('journey'),
+                    _supabase.from('vehicles').select('id, type')
                 ]);
+
+                const recentJourneys = journeysResp.data;
+                const allPersonnel = personnelResp.data;
+                const vehicles = vehiclesResp.data || [];
 
                 const journeyPersonnelCount = {};
                 if (allPersonnel) {
@@ -882,18 +892,23 @@
                     });
                 }
 
+                const vehicleMap = new Map((vehicles || []).map(v => [v.id, v]));
+
                 if (recentJourneys) {
                     document.getElementById('dash-journey-body').innerHTML = recentJourneys.map(j => {
-                        const personnelCount = journeyPersonnelCount[j.session] || 0;
+                        const vehicle = vehicleMap.get(j.vehicle_id);
+                        const personnelCount = journeyPersonnelCount[j.journey_ref] || 0;
                         return `
                         <tr>
                             <td>${j.journey_ref}</td>
-                            <td>${j.departure_location || 'N/A'} → ${j.destination || 'N/A'}</td>
+                            <td>${j.session || 'N/A'}</td>
                             <td>${j.departure_time ? new Date(j.departure_time).toLocaleString() : 'TBD'}</td>
-                            <td>${j.vehicles?.type || 'N/A'}</td>
+                            <td>${vehicle?.type || 'N/A'}</td>
                             <td>${personnelCount} passengers</td>
                         </tr>
                     `}).join('');
+                } else {
+                    document.getElementById('dash-journey-body').innerHTML = '<tr><td colspan="5">No journeys found.</td></tr>';
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
