@@ -626,12 +626,16 @@
                     <div class="form-group"><label>Driver</label><select id="j-driver"><option value="">Select driver</option></select></div>
                 </div>
 
-                <div class="section-title journey-personnel-section">Session personnel</div>
-                <div class="card journey-personnel-card">
-                    <div id="j-session-personnel-count" class="session-count">Total personnel for selected session: 0</div>
-                </div>
-
                 <button class="btn btn-primary mt-12" onclick="saveJourney()">Create Journey</button>
+            </div>
+            <div class="card mt-24">
+                <div class="section-title">Created Journeys</div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Journey Ref</th><th>Vehicle</th><th>Driver</th><th>Departure</th><th>Arrival</th></tr></thead>
+                        <tbody id="journey-table-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -755,7 +759,10 @@
             if(activeTab) activeTab.classList.add('active');
 
             if(id === 'dashboard') loadDashboard();
-            if(id === 'journey') loadJourneyFormOptions();
+            if(id === 'journey') {
+                loadJourneyFormOptions();
+                loadJourneyTable();
+            }
             if(id === 'personnel') {
                 loadPersonnel();
                 populateJourneyOptions('p-journey');
@@ -820,18 +827,20 @@
                 // 4. Personnel scheduled today
                 const { data: todaysJourneys } = await _supabase
                     .from('journeys')
-                    .select('personnel_ids')
+                    .select('session')
                     .gte('departure_time', todayStr + 'T00:00:00')
                     .lt('departure_time', todayStr + 'T23:59:59');
 
                 let totalPersonnel = 0;
                 if (todaysJourneys) {
-                    todaysJourneys.forEach(journey => {
-                        if (journey.personnel_ids) {
-                            const personnelCount = journey.personnel_ids.split(',').filter(id => id.trim()).length;
-                            totalPersonnel += personnelCount;
-                        }
-                    });
+                    const sessions = todaysJourneys.map(j => j.session).filter(s => s);
+                    if (sessions.length > 0) {
+                        const { data: personnelToday } = await _supabase
+                            .from('personnel')
+                            .select('id')
+                            .in('journey', sessions);
+                        totalPersonnel = personnelToday ? personnelToday.length : 0;
+                    }
                 }
 
                 document.getElementById('kpi-personnel-scheduled').innerText = totalPersonnel;
@@ -853,7 +862,7 @@
 
                 if (recentJourneys) {
                     document.getElementById('dash-journey-body').innerHTML = recentJourneys.map(j => {
-                        const personnelCount = journeyPersonnelCount[j.journey_ref] || (j.personnel_ids ? j.personnel_ids.split(',').filter(id => id.trim()).length : 0);
+                        const personnelCount = journeyPersonnelCount[j.session] || 0;
                         return `
                         <tr>
                             <td>${j.journey_ref}</td>
@@ -1011,7 +1020,6 @@
 
             const vehicleSelect = document.getElementById('j-vehicle');
             const driverSelect = document.getElementById('j-driver');
-            const sessionSelect = document.getElementById('j-session');
 
             vehicleSelect.innerHTML = `<option value="">Select vehicle</option>` + vehicles.map(v => `
                 <option value="${v.id}" data-capacity="${v.capacity}">${v.bus_number} (${v.capacity})</option>
@@ -1020,25 +1028,31 @@
             driverSelect.innerHTML = `<option value="">Select driver</option>` + drivers.map(d => `
                 <option value="${d.id}">${d.name}</option>
             `).join('');
-
-            if (sessionSelect) {
-                sessionSelect.onchange = updateJourneyPersonnelCount;
-                updateJourneyPersonnelCount();
-            }
         }
 
-        async function updateJourneyPersonnelCount() {
-            const session = document.getElementById('j-session').value;
-            const counter = document.getElementById('j-session-personnel-count');
+        async function loadJourneyTable() {
+            const { data: journeys, error } = await _supabase
+                .from('journeys')
+                .select('id, journey_ref, departure_time, arrival_time, vehicles(bus_number, type), drivers(name)')
+                .order('created_at', { ascending: false });
 
-            if (!session) {
-                counter.innerText = 'Total personnel for selected session: 0';
+            if (error || !journeys) {
+                console.error('Error loading journey table:', error);
                 return;
             }
 
-            const { data: personnelData } = await _supabase.from('personnel').select('id').eq('journey', session);
-            const total = personnelData ? personnelData.length : 0;
-            counter.innerText = `Total personnel for selected session: ${total}`;
+            const body = document.getElementById('journey-table-body');
+            if (!body) return;
+
+            body.innerHTML = journeys.map(j => `
+                <tr>
+                    <td>${j.journey_ref || 'N/A'}</td>
+                    <td>${j.vehicles?.bus_number || 'N/A'}</td>
+                    <td>${j.drivers?.name || 'N/A'}</td>
+                    <td>${j.departure_time ? new Date(j.departure_time).toLocaleString() : 'TBD'}</td>
+                    <td>${j.arrival_time ? new Date(j.arrival_time).toLocaleString() : 'TBD'}</td>
+                </tr>
+            `).join('');
         }
 
         async function saveDriver() {
@@ -1064,8 +1078,13 @@
                 return alert('Please select a vehicle and a driver for this journey.');
             }
 
+            const now = new Date();
+            const dateTimeStr = now.toISOString().slice(0, 16).replace('T', ' '); // YYYY-MM-DD HH:MM
+            const journeyRef = `${sessionValue} - ${dateTimeStr}`;
+
             const journeyData = {
-                journey_ref: sessionValue,
+                journey_ref: journeyRef,
+                session: sessionValue,
                 departure_time: document.getElementById('j-departure-time').value || null,
                 arrival_time: document.getElementById('j-arrival-time').value || null,
                 vehicle_id: parseInt(vehicleSelect.value),
@@ -1088,8 +1107,7 @@
                 document.getElementById('j-arrival-time').value = '';
                 document.getElementById('j-vehicle').value = '';
                 document.getElementById('j-driver').value = '';
-                updateJourneyPersonnelCount();
-                showScreen('dashboard');
+                loadJourneyTable();
             }
         }
 
@@ -1100,7 +1118,7 @@
         async function populateJourneyOptions(selectId) {
             const { data: journeys, error } = await _supabase
                 .from('journeys')
-                .select('id, journey_ref')
+                .select('id, journey_ref, session')
                 .order('created_at', { ascending: false });
 
             if (error || !journeys) {
@@ -1112,16 +1130,20 @@
             if (!select) return;
 
             select.innerHTML = `<option value="">Select journey</option>` + journeys.map(j => 
-                `<option value="${j.id}">${j.journey_ref}</option>`
+                `<option value="${j.id}" data-session="${j.session}">${j.journey_ref}</option>`
             ).join('');
         }
 
         // PDF MANIFEST GENERATOR
         async function downloadManifest() {
-            const journeyId = document.getElementById('journey-select').value;
+            const journeySelect = document.getElementById('journey-select');
+            const journeyId = journeySelect.value;
             if (!journeyId) {
                 return alert("Please select a journey to generate the manifest.");
             }
+
+            const selectedOption = journeySelect.options[journeySelect.selectedIndex];
+            const session = selectedOption.getAttribute('data-session');
 
             // Fetch the selected journey
             const { data: journey, error: journeyError } = await _supabase
@@ -1137,7 +1159,7 @@
             const { data: personnel, error: personnelError } = await _supabase
                 .from('personnel')
                 .select('*')
-                .eq('journey', journey.journey_ref);
+                .eq('journey', session);
 
             if (personnelError) {
                 console.error('Personnel error:', personnelError);
