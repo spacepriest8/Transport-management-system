@@ -641,7 +641,7 @@
                 <div class="section-title">Created Journeys</div>
                 <div class="table-wrap">
                     <table>
-                        <thead><tr><th>Journey Ref</th><th>Vehicle</th><th>Driver</th><th>Departure</th><th>Arrival</th></tr></thead>
+                        <thead><tr><th>Journey Ref</th><th>Vehicle</th><th>Vehicle Type</th><th></th>Driver</th><th>Departure</th><th>Arrival</th></tr></thead>
                         <tbody id="journey-table-body"></tbody>
                     </table>
                 </div>
@@ -682,7 +682,7 @@
                     <div class="form-group"><label>Sex</label><select id="p-sex"><option value="Male">Male</option><option value="Female">Female</option></select></div>
                     <div class="form-group"><label>Role</label><select id="p-role"><option value="">Select role</option><option value="HSE Inspector">HSE Inspector</option><option value="Welder">Welder</option><option value="IDT">IDT</option><option value="Engineering">Engineering</option><option value="QA/QC">QA/QC</option></select></div>
                     <div class="form-group"><label>Journey</label><select id="p-journey"><option value="">Select journey</option><option value="Journey A">Journey A</option><option value="Journey B">Journey B</option><option value="Journey C">Journey C</option><option value="Journey D">Journey D</option></select></div>
-                    <button class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
+                    <button type="button" class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
                 </div>
             </div>
 
@@ -954,12 +954,24 @@
         async function savePersonnel() {
             const editId = document.getElementById('p-edit-id').value;
             const personnelData = {
-                full_name: document.getElementById('p-name').value,
-                company: document.getElementById('p-company').value,
+                full_name: document.getElementById('p-name').value.trim(),
+                company: document.getElementById('p-company').value.trim(),
                 sex: document.getElementById('p-sex').value,
                 role: document.getElementById('p-role').value,
                 journey: document.getElementById('p-journey').value
             };
+
+            if (!personnelData.full_name) {
+                return alert('Please enter a personnel name.');
+            }
+            if (!personnelData.role) {
+                return alert('Please select a role.');
+            }
+            if (!personnelData.journey) {
+                return alert('Please select a journey.');
+            }
+
+            console.log('Saving personnel:', personnelData, { editId });
 
             let error;
             if (editId) {
@@ -968,16 +980,19 @@
                 ({ error } = await _supabase.from('personnel').insert([personnelData]));
             }
 
-            if (!error) {
-                alert(editId ? "Personnel updated!" : "Personnel saved!");
-                document.getElementById('p-edit-id').value = '';
-                document.getElementById('p-name').value = '';
-                document.getElementById('p-company').value = '';
-                document.getElementById('p-sex').value = 'Male';
-                document.getElementById('p-role').value = '';
-                document.getElementById('p-journey').value = '';
-                loadPersonnel();
+            if (error) {
+                console.error('Personnel save error:', error);
+                return alert('Error saving personnel: ' + (error.message || JSON.stringify(error)));
             }
+
+            alert(editId ? 'Personnel updated!' : 'Personnel saved!');
+            document.getElementById('p-edit-id').value = '';
+            document.getElementById('p-name').value = '';
+            document.getElementById('p-company').value = '';
+            document.getElementById('p-sex').value = 'Male';
+            document.getElementById('p-role').value = '';
+            document.getElementById('p-journey').value = '';
+            loadPersonnel();
         }
 
         function editPersonnel(id) {
@@ -1126,7 +1141,7 @@
             const driverSelect = document.getElementById('j-driver');
 
             vehicleSelect.innerHTML = `<option value="">Select vehicle</option>` + vehicles.map(v => `
-                <option value="${v.id}" data-capacity="${v.capacity}">${v.bus_number} (${v.capacity})</option>
+                <option value="${v.id}" data-capacity="${v.capacity}">${v.bus_number} (${v.type || 'Unknown'})</option>
             `).join('');
 
             driverSelect.innerHTML = `<option value="">Select driver</option>` + drivers.map(d => `
@@ -1135,28 +1150,41 @@
         }
 
         async function loadJourneyTable() {
-            const { data: journeys, error } = await _supabase
-                .from('journeys')
-                .select('id, journey_ref, departure_time, arrival_time, vehicles(bus_number, type), drivers(name)')
-                .order('created_at', { ascending: false });
+            const [journeysResp, vehiclesResp, driversResp] = await Promise.all([
+                _supabase.from('journeys').select('id, journey_ref, departure_time, arrival_time, vehicle_id, driver_id').order('created_at', { ascending: false }),
+                _supabase.from('vehicles').select('id, bus_number, type'),
+                _supabase.from('drivers').select('id, name')
+            ]);
 
-            if (error || !journeys) {
-                console.error('Error loading journey table:', error);
+            const journeys = journeysResp.data;
+            const vehicles = vehiclesResp.data || [];
+            const drivers = driversResp.data || [];
+
+            if (journeysResp.error) {
+                console.error('Error loading journey table:', journeysResp.error);
                 return;
             }
+
+            const vehicleMap = new Map((vehicles || []).map(v => [v.id, v]));
+            const driverMap = new Map((drivers || []).map(d => [d.id, d]));
 
             const body = document.getElementById('journey-table-body');
             if (!body) return;
 
-            body.innerHTML = journeys.map(j => `
+            body.innerHTML = (journeys || []).map(j => {
+                const vehicle = vehicleMap.get(j.vehicle_id);
+                const driver = driverMap.get(j.driver_id);
+                return `
                 <tr>
                     <td>${j.journey_ref || 'N/A'}</td>
-                    <td>${j.vehicles?.bus_number || 'N/A'}</td>
-                    <td>${j.drivers?.name || 'N/A'}</td>
+                    <td>${vehicle?.bus_number || 'N/A'}</td>
+                    <td>${vehicle?.type || 'N/A'}</td>
+                    <td>${driver?.name || 'N/A'}</td>
                     <td>${j.departure_time ? new Date(j.departure_time).toLocaleString() : 'TBD'}</td>
                     <td>${j.arrival_time ? new Date(j.arrival_time).toLocaleString() : 'TBD'}</td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function saveDriver() {
@@ -1209,12 +1237,7 @@
                 return alert('Please select a vehicle and a driver for this journey.');
             }
 
-            const now = new Date();
-            const dateTimeStr = now.toISOString().slice(0, 16).replace('T', ' '); // YYYY-MM-DD HH:MM
-            const journeyRef = `${sessionValue} - ${dateTimeStr}`;
-
             const journeyData = {
-                journey_ref: journeyRef,
                 session: sessionValue,
                 departure_time: document.getElementById('j-departure-time').value || null,
                 arrival_time: document.getElementById('j-arrival-time').value || null,
@@ -1243,10 +1266,10 @@
         }
 
         async function loadJourneysForReport() {
-            await populateJourneyOptions('journey-select');
+            await populateJourneyOptions('journey-select', false, true);
         }
 
-        async function populateJourneyOptions(selectId, isFilter = false) {
+        async function populateJourneyOptions(selectId, isFilter = false, useIdValue = false) {
             const { data: journeys, error } = await _supabase
                 .from('journeys')
                 .select('id, journey_ref, session')
@@ -1261,9 +1284,10 @@
             if (!select) return;
 
             const defaultOption = isFilter ? '<option value="">All journeys</option>' : '<option value="">Select journey</option>';
-            select.innerHTML = defaultOption + journeys.map(j => 
-                `<option value="${j.journey_ref}" data-session="${j.session}">${j.journey_ref}</option>`
-            ).join('');
+            select.innerHTML = defaultOption + journeys.map(j => {
+                const value = useIdValue ? j.id : j.journey_ref;
+                return `<option value="${value}" data-session="${j.session}">${j.journey_ref}</option>`;
+            }).join('');
         }
 
         // PDF MANIFEST GENERATOR
@@ -1280,7 +1304,7 @@
             // Fetch the selected journey
             const { data: journey, error: journeyError } = await _supabase
                 .from('journeys')
-                .select('journey_ref')
+                .select('journey_ref, session')
                 .eq('id', journeyId)
                 .single();
 
@@ -1291,7 +1315,7 @@
             const { data: personnel, error: personnelError } = await _supabase
                 .from('personnel')
                 .select('*')
-                .eq('journey', session);
+                .eq('journey', journey.journey_ref);
 
             if (personnelError) {
                 console.error('Personnel error:', personnelError);
@@ -1325,7 +1349,7 @@
                 startY: 42,
                 theme: 'grid',
                 headStyles: { fillColor: [26, 26, 24], textColor: [255, 255, 255], lineWidth: 1, lineColor: [0, 0, 0] },
-                bodyStyles: { textColor: [0, 0, 0], lineWidth: 0.75, lineColor: [80, 80, 80] }
+                bodyStyles: { textColor: [0, 0, 0], lineWidth: 0.45, lineColor: [80, 80, 80] }
             });
 
             doc.save(`${journey.journey_ref}_Personnel_Manifest.pdf`);
