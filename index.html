@@ -507,7 +507,8 @@
             border: 2px solid #e2e8f0;
             border-radius: 10px;
             background: #ffffff;
-            width: 100%;
+            flex: 0 0 10%;
+            max-width: 10%;
             margin-bottom: 16px;
             transition: all 0.2s ease;
             font-family: inherit;
@@ -529,6 +530,7 @@
             margin-right: 12px;
             transition: all 0.2s ease;
             font-family: inherit;
+            flex: 1 1 0;
             min-width: 150px;
         }
 
@@ -537,6 +539,13 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+        tr:nth-child(even) td {
+    background-color: #f9fafb;
+}
+
+.ti {
+    vertical-align: middle;
+}
 
         .filter-row {
             display: flex;
@@ -660,20 +669,21 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Company</th><th>Name</th><th>Sex</th><th>Role</th><th>Journey</th></tr></thead>
+                    <thead><tr><th>Company</th><th>Name</th><th>Sex</th><th>Role</th><th>Journey</th><th>Action</th></tr></thead>
                     <tbody id="personnel-table-body"></tbody>
                 </table>
             </div>
             <div class="card">
                 <div class="section-title">Add Personnel</div>
                 <div class="form-grid">
+                    <input type="hidden" id="p-edit-id" value="">
                     <div class="form-group"><label>Name</label><input type="text" id="p-name"></div>
                     <div class="form-group"><label>Company</label><input type="text" id="p-company"></div>
                     <div class="form-group"><label>Sex</label><select id="p-sex"><option value="Male">Male</option><option value="Female">Female</option></select></div>
                     <div class="form-group"><label>Role</label><input type="text" id="p-role"></div>
                     <div class="form-group"><label>Journey</label><select id="p-journey"><option value="">Select journey</option><option value="Journey A">Journey A</option><option value="Journey B">Journey B</option><option value="Journey C">Journey C</option><option value="Journey D">Journey D</option></select></div>
+                    <button class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
                 </div>
-                <button class="btn btn-primary mt-12" onclick="savePersonnel()">Save Personnel</button>
             </div>
 
             <div class="card">
@@ -691,19 +701,21 @@
         <div id="screen-vehicles" class="screen">
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Bus #</th><th>Plate</th><th>Type</th><th>Cap</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Bus #</th><th>Plate</th><th>Type</th><th>Cap</th><th>Status</th><th>Action</th></tr></thead>
                     <tbody id="vehicles-table-body"></tbody>
                 </table>
             </div>
             <div class="card">
                 <div class="section-title">Add Vehicle</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Bus</label><input type="text" id="v-bus-no"></div>
-                    <div class="form-group"><label>Plate</label><input type="text" id="v-plate"></div>
+                    <input type="hidden" id="v-edit-id" value="">
+                    <div class="form-group"><label>Vehicle Name</label><input type="text" id="v-bus-no"></div>
+                    <div class="form-group"><label>Plate Number</label><input type="text" id="v-plate"></div>
                     <div class="form-group"><label>Type</label><input type="text" id="v-type"></div>
+                    <div class="form-group"><label>Status</label><select id="v-status"><option value="Active">Active</option><option value="Maintenance">Maintenance</option><option value="Not Available">Not Available</option></select></div>
                     <div class="form-group"><label>Capacity</label><input type="number" id="v-capacity" value="40"></div>
+                    <button class="btn btn-primary mt-12" onclick="saveVehicle()">Save Vehicle</button>
                 </div>
-                <button class="btn btn-primary mt-12" onclick="saveVehicle()">Save Vehicle</button>
             </div>
         </div>
 
@@ -711,19 +723,20 @@
         <div id="screen-drivers" class="screen">
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Contact</th><th>License</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Contact</th><th>License</th><th>Status</th><th>Action</th></tr></thead>
                     <tbody id="drivers-table-body"></tbody>
                 </table>
             </div>
             <div class="card">
                 <div class="section-title">Add Driver</div>
                 <div class="form-grid">
+                    <input type="hidden" id="d-edit-id" value="">
                     <div class="form-group"><label>Name</label><input type="text" id="d-name"></div>
                     <div class="form-group"><label>Contact</label><input type="text" id="d-contact"></div>
                     <div class="form-group"><label>License</label><input type="text" id="d-license"></div>
-                    <div class="form-group"><label>Status</label><select id="d-availability"><option>Available</option><option>On Leave</option></select></div>
+                    <div class="form-group"><label>Status</label><select id="d-availability"><option>Available</option><option>On Leave</option><option>Not Available</option></select></div>
+                    <button class="btn btn-primary mt-12" onclick="saveDriver()">Save Driver</button>
                 </div>
-                <button class="btn btn-primary mt-12" onclick="saveDriver()">Save Driver</button>
             </div>
         </div>
 
@@ -746,8 +759,10 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhcnh1bmZxZnFxemJic2lmdGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTcyNjcsImV4cCI6MjA5MzkzMzI2N30.03TscP9nxu9sAcc8_eQsDayJGMZwFzrdGE4XNhdzr4E"; 
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // Global variables for filtering
+        // Global variables for filtering and editing
         let allPersonnelData = [];
+        let allVehiclesData = [];
+        let allDriversData = [];
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -887,7 +902,16 @@
         }
 
         function renderPersonnelTable(data) {
-            document.getElementById('personnel-table-body').innerHTML = data.map(p => `<tr><td>${p.company || ''}</td><td>${p.full_name || ''}</td><td>${p.sex || 'N/A'}</td><td>${p.role || 'N/A'}</td><td>${p.journey || 'N/A'}</td></tr>`).join('');
+            document.getElementById('personnel-table-body').innerHTML = data.map(p => `
+                <tr>
+                    <td>${p.company || ''}</td>
+                    <td>${p.full_name || ''}</td>
+                    <td>${p.sex || 'N/A'}</td>
+                    <td>${p.role || 'N/A'}</td>
+                    <td>${p.journey || 'N/A'}</td>
+                    <td><button class="btn btn-secondary btn-small" onclick="editPersonnel(${p.id})">Edit</button></td>
+                </tr>
+            `).join('');
         }
 
         function filterPersonnel() {
@@ -914,7 +938,8 @@
         function formatStatusBadge(status) {
             const normalized = (status || '').toString().toLowerCase();
             if (normalized === 'active' || normalized === 'available') return `<span class="badge badge-available">${status}</span>`;
-            if (normalized === 'on leave' || normalized === 'pending' || normalized === 'expired') return `<span class="badge badge-amber">${status}</span>`;
+            if (normalized === 'maintenance' || normalized === 'on leave') return `<span class="badge badge-amber">${status}</span>`;
+            if (normalized === 'not available' || normalized === 'expired') return `<span class="badge badge-red">${status}</span>`;
             return `<span class="badge badge-gray">${status}</span>`;
         }
 
@@ -926,14 +951,43 @@
         }
 
         async function savePersonnel() {
-            const { error } = await _supabase.from('personnel').insert([{
+            const editId = document.getElementById('p-edit-id').value;
+            const personnelData = {
                 full_name: document.getElementById('p-name').value,
                 company: document.getElementById('p-company').value,
                 sex: document.getElementById('p-sex').value,
                 role: document.getElementById('p-role').value,
                 journey: document.getElementById('p-journey').value
-            }]);
-            if (!error) { alert("Personnel Saved!"); loadPersonnel(); }
+            };
+
+            let error;
+            if (editId) {
+                ({ error } = await _supabase.from('personnel').update(personnelData).eq('id', editId));
+            } else {
+                ({ error } = await _supabase.from('personnel').insert([personnelData]));
+            }
+
+            if (!error) {
+                alert(editId ? "Personnel updated!" : "Personnel saved!");
+                document.getElementById('p-edit-id').value = '';
+                document.getElementById('p-name').value = '';
+                document.getElementById('p-company').value = '';
+                document.getElementById('p-sex').value = 'Male';
+                document.getElementById('p-role').value = '';
+                document.getElementById('p-journey').value = '';
+                loadPersonnel();
+            }
+        }
+
+        function editPersonnel(id) {
+            const person = allPersonnelData.find(p => p.id === id);
+            if (!person) return;
+            document.getElementById('p-edit-id').value = id;
+            document.getElementById('p-name').value = person.full_name || '';
+            document.getElementById('p-company').value = person.company || '';
+            document.getElementById('p-sex').value = person.sex || 'Male';
+            document.getElementById('p-role').value = person.role || '';
+            document.getElementById('p-journey').value = person.journey || '';
         }
 
         async function bulkUploadPersonnel() {
@@ -990,23 +1044,72 @@
 
         async function loadVehicles() {
             const { data } = await _supabase.from('vehicles').select('*');
-            if (data) document.getElementById('vehicles-table-body').innerHTML = data.map(v => `<tr><td>${v.bus_number}</td><td>${v.plate}</td><td>${v.type}</td><td>${v.capacity}</td><td>${formatStatusBadge(v.status)}</td></tr>`).join('');
+            allVehiclesData = data || [];
+            if (data) document.getElementById('vehicles-table-body').innerHTML = data.map(v => `
+                <tr>
+                    <td>${v.bus_number}</td>
+                    <td>${v.plate}</td>
+                    <td>${v.type}</td>
+                    <td>${v.capacity}</td>
+                    <td>${formatStatusBadge(v.status)}</td>
+                    <td><button class="btn btn-secondary btn-small" onclick="editVehicle(${v.id})">Edit</button></td>
+                </tr>
+            `).join('');
         }
 
         async function saveVehicle() {
-            const { error } = await _supabase.from('vehicles').insert([{
+            const editId = document.getElementById('v-edit-id').value;
+            const statusValue = document.getElementById('v-status').value || 'Active';
+            const vehicleData = {
                 bus_number: document.getElementById('v-bus-no').value,
                 plate: document.getElementById('v-plate').value,
                 type: document.getElementById('v-type').value,
                 capacity: Number(document.getElementById('v-capacity').value),
-                status: 'Active'
-            }]);
-            if (!error) { alert("Vehicle Saved!"); loadVehicles(); }
+                status: statusValue
+            };
+
+            let error;
+            if (editId) {
+                ({ error } = await _supabase.from('vehicles').update(vehicleData).eq('id', editId));
+            } else {
+                ({ error } = await _supabase.from('vehicles').insert([vehicleData]));
+            }
+
+            if (!error) {
+                alert(editId ? "Vehicle updated!" : "Vehicle saved!");
+                document.getElementById('v-edit-id').value = '';
+                document.getElementById('v-bus-no').value = '';
+                document.getElementById('v-plate').value = '';
+                document.getElementById('v-type').value = '';
+                document.getElementById('v-status').value = 'Active';
+                document.getElementById('v-capacity').value = 40;
+                loadVehicles();
+            }
+        }
+
+        function editVehicle(id) {
+            const vehicle = allVehiclesData.find(v => v.id === id);
+            if (!vehicle) return;
+            document.getElementById('v-edit-id').value = id;
+            document.getElementById('v-bus-no').value = vehicle.bus_number || '';
+            document.getElementById('v-plate').value = vehicle.plate || '';
+            document.getElementById('v-type').value = vehicle.type || '';
+            document.getElementById('v-status').value = vehicle.status || 'Active';
+            document.getElementById('v-capacity').value = vehicle.capacity || 0;
         }
 
         async function loadDrivers() {
             const { data } = await _supabase.from('drivers').select('*');
-            if (data) document.getElementById('drivers-table-body').innerHTML = data.map(d => `<tr><td>${d.name}</td><td>${d.contact}</td><td>${d.license_number}</td><td>${formatStatusBadge(d.availability)}</td></tr>`).join('');
+            allDriversData = data || [];
+            if (data) document.getElementById('drivers-table-body').innerHTML = data.map(d => `
+                <tr>
+                    <td>${d.name}</td>
+                    <td>${d.contact}</td>
+                    <td>${d.license_number}</td>
+                    <td>${formatStatusBadge(d.availability)}</td>
+                    <td><button class="btn btn-secondary btn-small" onclick="editDriver(${d.id})">Edit</button></td>
+                </tr>
+            `).join('');
         }
 
         async function loadJourneyFormOptions() {
@@ -1056,13 +1159,40 @@
         }
 
         async function saveDriver() {
-            const { error } = await _supabase.from('drivers').insert([{
+            const editId = document.getElementById('d-edit-id').value;
+            const driverData = {
                 name: document.getElementById('d-name').value,
                 contact: document.getElementById('d-contact').value,
                 license_number: document.getElementById('d-license').value,
                 availability: document.getElementById('d-availability').value
-            }]);
-            if (!error) { alert("Driver Saved!"); loadDrivers(); }
+            };
+
+            let error;
+            if (editId) {
+                ({ error } = await _supabase.from('drivers').update(driverData).eq('id', editId));
+            } else {
+                ({ error } = await _supabase.from('drivers').insert([driverData]));
+            }
+
+            if (!error) {
+                alert(editId ? "Driver updated!" : "Driver saved!");
+                document.getElementById('d-edit-id').value = '';
+                document.getElementById('d-name').value = '';
+                document.getElementById('d-contact').value = '';
+                document.getElementById('d-license').value = '';
+                document.getElementById('d-availability').value = 'Available';
+                loadDrivers();
+            }
+        }
+
+        function editDriver(id) {
+            const driver = allDriversData.find(d => d.id === id);
+            if (!driver) return;
+            document.getElementById('d-edit-id').value = id;
+            document.getElementById('d-name').value = driver.name || '';
+            document.getElementById('d-contact').value = driver.contact || '';
+            document.getElementById('d-license').value = driver.license_number || '';
+            document.getElementById('d-availability').value = driver.availability || 'Available';
         }
 
         async function saveJourney() {
